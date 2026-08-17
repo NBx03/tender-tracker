@@ -7,6 +7,20 @@ _INSERT_TENDER = text("""
     RETURNING id, title, status, created_at
 """)
 
+_LOCK_TENDER = text("""
+    SELECT id, title, status, created_at
+    FROM tenders
+    WHERE id = :tender_id
+    FOR UPDATE
+""")
+
+_UPDATE_STATUS = text("""
+    UPDATE tenders
+    SET status = CAST(:new_status AS tender_status)
+    WHERE id = :tender_id
+    RETURNING id, title, status, created_at
+""")
+
 _INSERT_HISTORY = text("""
     INSERT INTO tender_status_history
         (tender_id, old_status, new_status, changed_by, reason)
@@ -34,6 +48,38 @@ def create_tender(
             "tender_id": tender.id,
             "old_status": None,
             "new_status": tender.status,
+            "changed_by": changed_by,
+            "reason": reason,
+        },
+    )
+    return tender
+
+
+def lock_tender(connection: Connection, tender_id: int) -> Row | None:
+    # FOR UPDATE держит строку до конца транзакции. Второй одновременный
+    # запрос ждёт здесь и после ожидания читает уже изменённый статус,
+    # поэтому проверяет переход от актуального значения.
+    return connection.execute(_LOCK_TENDER, {"tender_id": tender_id}).one_or_none()
+
+
+def change_status(
+    connection: Connection,
+    tender_id: int,
+    old_status: str,
+    new_status: str,
+    changed_by: str,
+    reason: str,
+) -> Row:
+    tender = connection.execute(
+        _UPDATE_STATUS,
+        {"tender_id": tender_id, "new_status": new_status},
+    ).one()
+    connection.execute(
+        _INSERT_HISTORY,
+        {
+            "tender_id": tender_id,
+            "old_status": old_status,
+            "new_status": new_status,
             "changed_by": changed_by,
             "reason": reason,
         },

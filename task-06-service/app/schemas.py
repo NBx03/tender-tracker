@@ -17,6 +17,12 @@ class TenderCreate(RequestModel):
     reason: str = Field(min_length=1, max_length=500)
 
 
+class StatusUpdate(RequestModel):
+    status: TenderStatus
+    changed_by: str = Field(min_length=1, max_length=100)
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class Tender(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
