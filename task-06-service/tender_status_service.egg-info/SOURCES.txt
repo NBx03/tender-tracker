@@ -11,3 +11,5 @@ tender_status_service.egg-info/SOURCES.txt
 tender_status_service.egg-info/dependency_links.txt
 tender_status_service.egg-info/requires.txt
 tender_status_service.egg-info/top_level.txt
+tests/test_api.py
+tests/test_transitions.py
