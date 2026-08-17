@@ -76,6 +76,33 @@ CREATE TABLE lot_performers (
     PRIMARY KEY (lot_id, performer_id)
 );
 
+-- Не более одной победившей ставки на лот. Одновременно путь доступа
+-- к победителям: индекс содержит только их и на порядок меньше таблицы.
+CREATE UNIQUE INDEX bids_single_winner_per_lot_idx ON bids (lot_id)
+    WHERE is_winner;
+
+-- Не более одной своей компании: внутри частичного индекса значение
+-- is_self всегда true, поэтому уникальность допускает единственную строку.
+CREATE UNIQUE INDEX companies_single_self_idx ON companies (is_self)
+    WHERE is_self;
+
+-- Отбор завершённых закупок за период. У черновиков и активных тендеров
+-- дата итогов пуста, и в индексе их нет.
+CREATE INDEX tenders_decided_at_idx ON tenders (decided_at)
+    WHERE decided_at IS NOT NULL;
+
+-- Ближайшие закрытия приёма заявок по идущим закупкам.
+CREATE INDEX tenders_active_bids_close_idx ON tenders (bids_close_at)
+    WHERE status = 'active';
+
+CREATE INDEX tenders_customer_id_idx ON tenders (customer_id);
+CREATE INDEX bids_lot_id_idx ON bids (lot_id);
+CREATE INDEX bids_company_id_idx ON bids (company_id);
+CREATE INDEX lot_performers_performer_id_idx ON lot_performers (performer_id);
+
+-- Отдельного индекса по lots.tender_id нет: соединение по нему обслуживает
+-- индекс ограничения lots_tender_lot_number_unique, где tender_id первый.
+
 COMMENT ON TABLE companies IS
     'Компании: заказчики закупок и участники, подающие ставки';
 COMMENT ON COLUMN companies.is_self IS
