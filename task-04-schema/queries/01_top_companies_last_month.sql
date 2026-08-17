@@ -17,6 +17,8 @@
 --
 -- Другой период задаётся сдвигом границ в CTE period.
 
+SET client_encoding = 'UTF8';
+
 WITH period AS (
     SELECT date_trunc('month', now()) - interval '1 month' AS starts_at,
            date_trunc('month', now())                      AS ends_at

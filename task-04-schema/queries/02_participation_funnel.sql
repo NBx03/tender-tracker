@@ -13,6 +13,8 @@
 --
 -- Изменение конверсии — в процентных пунктах к предыдущему месяцу выборки.
 
+SET client_encoding = 'UTF8';
+
 WITH self_company AS (
     SELECT id FROM companies WHERE is_self
 ),

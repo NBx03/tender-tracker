@@ -1,6 +1,10 @@
 -- Схема базы данных системы мониторинга госзакупок.
 -- Применяется на пустой базе: psql -d tender_registry -f 01_schema.sql
 
+-- Файл в UTF-8. Без явного указания psql берёт кодировку клиента из локали
+-- системы, и на русской Windows русские комментарии не проходят.
+SET client_encoding = 'UTF8';
+
 CREATE TYPE tender_status AS ENUM ('draft', 'active', 'won', 'lost');
 
 CREATE TABLE companies (
