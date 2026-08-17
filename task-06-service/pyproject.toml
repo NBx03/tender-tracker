@@ -15,5 +15,10 @@ dependencies = [
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
+# Каталог пакета указан дважды: PEP 621 не описывает, где искать исходники,
+# и setuptools с Poetry спрашивают это каждый по-своему.
 [tool.setuptools]
 packages = ["app"]
+
+[tool.poetry]
+packages = [{ include = "app" }]
