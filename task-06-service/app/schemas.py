@@ -30,3 +30,14 @@ class Tender(BaseModel):
     title: str
     status: TenderStatus
     created_at: datetime
+
+
+class StatusChange(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    # Пусто у записи о создании тендера.
+    old_status: TenderStatus | None
+    new_status: TenderStatus
+    changed_by: str
+    reason: str
+    changed_at: datetime

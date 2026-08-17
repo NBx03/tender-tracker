@@ -5,7 +5,7 @@ from sqlalchemy.engine import Connection
 
 from app import repository
 from app.db import get_connection
-from app.schemas import StatusUpdate, Tender, TenderCreate
+from app.schemas import StatusChange, StatusUpdate, Tender, TenderCreate
 from app.statuses import ALLOWED_TRANSITIONS, TenderStatus, is_allowed
 
 app = FastAPI(title="Трекинг статусов тендеров")
@@ -57,3 +57,19 @@ def update_status(
         reason=payload.reason,
     )
     return Tender.model_validate(updated)
+
+
+@app.get("/tenders/{tender_id}/history", response_model=list[StatusChange])
+def read_history(tender_id: int, connection: DbConnection) -> list[StatusChange]:
+    # Пустой список означал бы «тендер есть, изменений нет», а такого не
+    # бывает: запись о создании есть у каждого тендера.
+    if repository.get_tender(connection, tender_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Тендер {tender_id} не найден",
+        )
+
+    return [
+        StatusChange.model_validate(change)
+        for change in repository.select_history(connection, tender_id)
+    ]

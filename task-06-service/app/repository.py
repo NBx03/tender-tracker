@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Row
 
@@ -12,6 +14,19 @@ _LOCK_TENDER = text("""
     FROM tenders
     WHERE id = :tender_id
     FOR UPDATE
+""")
+
+_SELECT_TENDER = text("""
+    SELECT id, title, status, created_at
+    FROM tenders
+    WHERE id = :tender_id
+""")
+
+_SELECT_HISTORY = text("""
+    SELECT old_status, new_status, changed_by, reason, changed_at
+    FROM tender_status_history
+    WHERE tender_id = :tender_id
+    ORDER BY changed_at, id
 """)
 
 _UPDATE_STATUS = text("""
@@ -53,6 +68,16 @@ def create_tender(
         },
     )
     return tender
+
+
+def get_tender(connection: Connection, tender_id: int) -> Row | None:
+    return connection.execute(_SELECT_TENDER, {"tender_id": tender_id}).one_or_none()
+
+
+def select_history(connection: Connection, tender_id: int) -> Sequence[Row]:
+    # Сортировка по времени и по идентификатору: две записи одного тендера
+    # могут получить одинаковое время, и тогда порядок задаёт идентификатор.
+    return connection.execute(_SELECT_HISTORY, {"tender_id": tender_id}).all()
 
 
 def lock_tender(connection: Connection, tender_id: int) -> Row | None:
